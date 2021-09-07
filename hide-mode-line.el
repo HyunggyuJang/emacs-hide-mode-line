@@ -24,12 +24,18 @@
 
 (defvar hide-mode-line-format nil
   "The modeline format to use when `hide-mode-line-mode' is active.")
+(defvar hide-header-line-format nil
+  "The headerline format to use when `hide-mode-line-mode' is active.")
 
 (defvar hide-mode-line-excluded-modes '(fundamental-mode)
   "List of major modes where `global-hide-mode-line-mode' won't affect.")
 
 (defvar-local hide-mode-line--old-format nil
   "Storage for the old `mode-line-format', so it can be restored when
+`hide-mode-line-mode' is disabled.")
+
+(defvar-local hide-header-line--old-format nil
+  "Storage for the old `header-line-format', so it can be restored when
 `hide-mode-line-mode' is disabled.")
 
 ;;;###autoload
@@ -41,14 +47,19 @@
       (progn
         (add-hook 'after-change-major-mode-hook #'hide-mode-line-reset nil t)
         (setq hide-mode-line--old-format mode-line-format
-              mode-line-format hide-mode-line-format))
+              mode-line-format hide-mode-line-format
+              hide-header-line--old-format header-line-format
+              header-line-format hide-header-line-format))
     (remove-hook 'after-change-major-mode-hook #'hide-mode-line-reset t)
     (setq mode-line-format hide-mode-line--old-format
-          hide-mode-line--old-format nil))
+          hide-mode-line--old-format nil
+          header-line-format hide-header-line--old-format
+          hide-header-line--old-format nil))
   (force-mode-line-update))
 
 ;; Ensure major-mode or theme changes don't overwrite these variables
 (put 'hide-mode-line--old-format 'permanent-local t)
+(put 'hide-header-line--old-format 'permanent-local t)
 (put 'hide-mode-line-mode 'permanent-local-hook t)
 (put 'hide-mode-line-reset 'permanent-local-hook t)
 
