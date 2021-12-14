@@ -1,12 +1,12 @@
 ;;; hide-mode-line.el --- minor mode that hides/masks your modeline -*- lexical-binding: t; -*-
 ;;
-;; Copyright (C) 2018 Henrik Lissner
+;; Copyright (C) 2018-2021 Henrik Lissner
 ;;
 ;; Author: Henrik Lissner <http://github/hlissner>
-;; Maintainer: Henrik Lissner <henrik@lissner.net>
+;; Maintainer: Henrik Lissner <git@henrik.io>
 ;; Created: March 01, 2018
-;; Modified: September 21, 2019
-;; Version: 1.0.2
+;; Modified: November 12, 2021
+;; Version: 1.0.3
 ;; Keywords: frames mode-line
 ;; URL: https://github.com/hlissner/emacs-hide-mode-line
 ;; Package-Requires: ((emacs "24.4"))
@@ -45,41 +45,30 @@
   :global nil
   (if hide-mode-line-mode
       (progn
-        (add-hook 'after-change-major-mode-hook #'hide-mode-line-reset nil t)
-        (setq hide-mode-line--old-format mode-line-format
-              mode-line-format hide-mode-line-format
-              hide-header-line--old-format header-line-format
+        (add-hook 'after-change-major-mode-hook #'hide-mode-line-mode nil t)
+        (unless hide-mode-line--old-format
+          (setq hide-mode-line--old-format mode-line-format))
+        (unless hide-header-line--old-format
+          (setq hide-header-line--old-format header-line-format))
+        (setq mode-line-format hide-mode-line-format
               header-line-format hide-header-line-format))
-    (remove-hook 'after-change-major-mode-hook #'hide-mode-line-reset t)
+    (remove-hook 'after-change-major-mode-hook #'hide-mode-line-mode t)
     (setq mode-line-format hide-mode-line--old-format
           hide-mode-line--old-format nil
           header-line-format hide-header-line--old-format
           hide-header-line--old-format nil))
-  (force-mode-line-update))
+  (when (called-interactively-p 'any)
+    (redraw-display)))
 
 ;; Ensure major-mode or theme changes don't overwrite these variables
 (put 'hide-mode-line--old-format 'permanent-local t)
 (put 'hide-header-line--old-format 'permanent-local t)
 (put 'hide-mode-line-mode 'permanent-local-hook t)
-(put 'hide-mode-line-reset 'permanent-local-hook t)
-
-(defun hide-mode-line-reset ()
-  "Reset `hide-mode-line-mode' in the current buffer, if necessary.
-
-Sometimes, a major mode is activated after `hide-mode-line-mode' is activated,
-thus disabling it (because changing major modes invokes
-`kill-all-local-variables' and specifically kills `mode-line-format's local
-value, whether or not it's permanent-local.
-
-Attach this to `after-change-major-mode-hook' and `hide-mode-line-mode' will be
-cycled to fix this."
-  (when hide-mode-line-mode
-    (hide-mode-line-mode -1)
-    (hide-mode-line-mode +1)))
 
 ;;;###autoload
 (define-globalized-minor-mode global-hide-mode-line-mode
-  hide-mode-line-mode turn-on-hide-mode-line-mode)
+  hide-mode-line-mode turn-on-hide-mode-line-mode
+  (redraw-display))
 
 ;;;###autoload
 (defun turn-on-hide-mode-line-mode ()
